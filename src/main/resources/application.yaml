@@ -1,0 +1,71 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: distributed-rate-limiter
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000
+      jedis:
+        pool:
+          max-active: 50
+          max-idle: 10
+          min-idle: 5
+          max-wait: 2000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Rate Limiter Configuration
+rate-limiter:
+  algorithms:
+    default: token_bucket
+    available:
+      - token_bucket
+      - sliding_window
+      - fixed_window
+
+  defaults:
+    requests-per-minute: 100
+    burst-capacity: 20
+    window-size: 60
+
+  monitoring:
+    metrics-enabled: true
+    detailed-logging: false
+
+logging:
+  level:
+    com.ratelimiter: DEBUG
+    org.springframework.data.redis: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+---
+spring:
+  config:
+    activate:
+      on-profile: docker
+  data:
+    redis:
+      host: redis-cluster
+      port: 6379
+
